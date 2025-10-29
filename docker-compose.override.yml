@@ -1,0 +1,35 @@
+# Development overrides for docker-compose.yml
+
+services:
+  receipt-analyzer-api:
+    build:
+      context: .
+    volumes:
+      # Mount source code for development
+      - ./src:/app/src:ro
+      - ./package*.json:/app/
+      - ./tsconfig.json:/app/
+      # Mount uploads and logs for persistence
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+      - ENABLE_INPUT_SANITIZATION=true
+      - LOG_SENSITIVE_DATA=false
+    command: ["npm", "run", "dev"]
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # Debug port
+
+  mongodb:
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+    ports:
+      - "27017:27017"
+
+  redis:
+    command: redis-server --appendonly yes --requirepass redis123
+    ports:
+      - "6379:6379"

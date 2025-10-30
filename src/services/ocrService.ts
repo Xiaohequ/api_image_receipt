@@ -235,7 +235,9 @@ export class OCRService {
    * Generate hash for image caching
    */
   private generateImageHash(imageBuffer: Buffer): string {
-    return crypto.createHash('sha256').update(imageBuffer).digest('hex');
+    const hash = crypto.createHash('sha256');
+    hash.update(imageBuffer);
+    return hash.digest('hex') as string;
   }
 
   /**

@@ -6,6 +6,7 @@ import { statusService } from '../services/statusService';
 import { databaseService } from '../services/databaseService';
 import { cacheService } from '../services/cacheService';
 import { performanceService } from '../services/performanceService';
+import { openaiService } from '../services/openaiService';
 
 const router = Router();
 
@@ -13,7 +14,7 @@ const router = Router();
 router.get('/', async (req: Request, res: Response): Promise<void> => {
   try {
     // Get health status from services
-    const [queueHealth, workerHealth, databaseHealth, cacheHealth, processingStats, performanceMetrics] = await Promise.all([
+    const [queueHealth, workerHealth, databaseHealth, cacheHealth, openaiHealth, processingStats, performanceMetrics] = await Promise.all([
       queueService.getHealthStatus().catch(() => ({ 
         status: 'unhealthy' as const, 
         queueLength: 0, 
@@ -31,6 +32,11 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
         status: 'unhealthy' as const, 
         connected: false, 
         responseTime: 0 
+      })),
+      openaiService.getHealthStatus().catch(() => ({ 
+        status: 'unhealthy' as const, 
+        initialized: false, 
+        hasApiKey: false 
       })),
       statusService.getProcessingStats().catch(() => null),
       performanceService.getMetrics()
@@ -57,6 +63,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
         worker: workerHealth.status === 'healthy' ? 'up' : 'down',
         database: databaseHealth.status,
         cache: cacheHealth.status === 'healthy' ? 'up' : 'down',
+        openai: openaiHealth.status === 'healthy' ? 'up' : 'down',
         // TODO: Add OCR service health check in task 5
         ocr: 'not_configured'
       },

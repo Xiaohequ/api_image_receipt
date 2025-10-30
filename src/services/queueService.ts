@@ -182,7 +182,7 @@ class QueueService {
         error: job.failedReason,
         createdAt: new Date(job.timestamp),
         processedAt: job.processedOn ? new Date(job.processedOn) : undefined,
-        failedAt: job.failedOn ? new Date(job.failedOn) : undefined,
+        failedAt: job.finishedOn && await job.isFailed() ? new Date(job.finishedOn) : undefined,
       };
     } catch (error) {
       logger.error('Failed to get job status', { requestId, error });

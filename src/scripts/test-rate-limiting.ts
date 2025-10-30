@@ -97,7 +97,7 @@ class RateLimitTester {
       logger.info(`   Reset time: ${status.resetTime.toISOString()}`);
     } catch (error) {
       logger.warn('⚠️  Rate limit status test failed (may be expected if cache is not available)');
-      logger.warn(`   Error: ${error.message}`);
+      logger.warn(`   Error: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -111,7 +111,7 @@ class RateLimitTester {
       logger.info('✅ Rate limit reset completed successfully');
     } catch (error) {
       logger.warn('⚠️  Rate limit reset test failed (may be expected if cache is not available)');
-      logger.warn(`   Error: ${error.message}`);
+      logger.warn(`   Error: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -134,7 +134,7 @@ class RateLimitTester {
       logger.info('✅ Cache service integration works correctly');
     } catch (error) {
       logger.warn('⚠️  Cache integration test failed (may be expected if Redis is not available)');
-      logger.warn(`   Error: ${error.message}`);
+      logger.warn(`   Error: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -154,7 +154,7 @@ class RateLimitTester {
         passedTests++;
       } catch (error) {
         logger.error(`❌ Test failed: ${scenario.name}`);
-        logger.error(`   Error: ${error.message}`);
+        logger.error(`   Error: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
 

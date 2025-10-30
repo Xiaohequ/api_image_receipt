@@ -1,8 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { ReceiptAnalysisRequest as IReceiptAnalysisRequest, ReceiptStatus, ReceiptType, ImageFormat } from '../types';
 
-export interface ReceiptAnalysisRequestDocument extends IReceiptAnalysisRequest, Document {
-  _id: string;
+export interface ReceiptAnalysisRequestDocument extends Omit<IReceiptAnalysisRequest, 'id'>, Document {
+  requestId: string;
 }
 
 const ImageMetadataSchema = new Schema({
@@ -56,7 +56,7 @@ const RequestMetadataSchema = new Schema({
 }, { _id: false });
 
 const ReceiptAnalysisRequestSchema = new Schema<ReceiptAnalysisRequestDocument>({
-  id: {
+  requestId: {
     type: String,
     required: true,
     unique: true,
@@ -96,9 +96,9 @@ ReceiptAnalysisRequestSchema.index({ clientId: 1, createdAt: -1 });
 ReceiptAnalysisRequestSchema.index({ status: 1, createdAt: 1 });
 ReceiptAnalysisRequestSchema.index({ 'metadata.priority': 1, createdAt: 1 });
 
-// Virtual for converting _id to id
+// Virtual for converting requestId to id for API responses
 ReceiptAnalysisRequestSchema.virtual('id').get(function(this: any) {
-  return this._id.toHexString();
+  return this.requestId;
 });
 
 // Ensure virtual fields are serialized
@@ -107,6 +107,7 @@ ReceiptAnalysisRequestSchema.set('toJSON', {
   transform: function(doc: any, ret: any) {
     delete ret._id;
     delete ret.__v;
+    delete ret.requestId; // Remove the internal requestId field
     return ret;
   },
 });

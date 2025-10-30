@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { ImageMetadata, ReceiptAnalysisRequest, ReceiptStatus, UploadResponse, ReceiptType } from '../types';
@@ -34,8 +33,8 @@ export class UploadService {
   private async initializeTempDirectory(): Promise<void> {
     try {
       await fs.mkdir(UPLOAD_CONFIG.tempDir, { recursive: true });
-      logger.info('Temporary upload directory initialized', { 
-        tempDir: UPLOAD_CONFIG.tempDir 
+      logger.info('Temporary upload directory initialized', {
+        tempDir: UPLOAD_CONFIG.tempDir
       });
     } catch (error) {
       logger.error('Failed to initialize temporary upload directory', {
@@ -58,7 +57,7 @@ export class UploadService {
       () => this.cleanupOldFiles(),
       UPLOAD_CONFIG.cleanupIntervalMinutes * 60 * 1000
     );
-    
+
     logger.info('Upload cleanup timer started', {
       intervalMinutes: UPLOAD_CONFIG.cleanupIntervalMinutes
     });
@@ -103,7 +102,7 @@ export class UploadService {
         filePath,
         originalSize: fileBuffer.length
       };
-      
+
       await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 
       logger.info('File saved to temporary storage', {
@@ -113,13 +112,14 @@ export class UploadService {
         clientId
       });
 
-      return filePath;
+      // Return relative path for worker compatibility
+      return `./${path.relative('.', filePath)}`;
     } catch (error) {
       logger.error('Failed to save uploaded file', {
         requestId,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
-      
+
       throw new AppError(
         ErrorCode.PROCESSING_ERROR,
         'Erreur lors de la sauvegarde du fichier',
@@ -175,7 +175,7 @@ export class UploadService {
         requestId,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
-      
+
       throw new AppError(
         ErrorCode.PROCESSING_ERROR,
         'Erreur lors de la création de la demande d\'analyse',
@@ -210,7 +210,7 @@ export class UploadService {
       'png': 'png',
       'pdf': 'pdf'
     };
-    
+
     return extensions[format.toLowerCase()] || 'jpg';
   }
 
@@ -222,16 +222,16 @@ export class UploadService {
       const files = await fs.readdir(UPLOAD_CONFIG.tempDir);
       const now = new Date();
       const maxAge = UPLOAD_CONFIG.maxRetentionHours * 60 * 60 * 1000;
-      
+
       let cleanedCount = 0;
 
       for (const file of files) {
         const filePath = path.join(UPLOAD_CONFIG.tempDir, file);
-        
+
         try {
           const stats = await fs.stat(filePath);
           const age = now.getTime() - stats.mtime.getTime();
-          
+
           if (age > maxAge) {
             await fs.unlink(filePath);
             cleanedCount++;

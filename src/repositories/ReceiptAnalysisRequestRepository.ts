@@ -14,7 +14,7 @@ export class ReceiptAnalysisRequestRepository extends BaseRepository<ReceiptAnal
    */
   async findByRequestId(requestId: string): Promise<ReceiptAnalysisRequestDocument | null> {
     try {
-      return await this.model.findOne({ id: requestId }).exec();
+      return await this.model.findOne({ requestId: requestId }).exec();
     } catch (error) {
       logger.error('Error finding request by ID:', error);
       throw error;
@@ -32,11 +32,7 @@ export class ReceiptAnalysisRequestRepository extends BaseRepository<ReceiptAnal
       // Use lean() for better performance when we don't need full Mongoose documents
       return await this.findWithPagination(
         { clientId }, 
-        pagination,
-        { 
-          sort: { createdAt: -1 },
-          lean: true // Return plain JavaScript objects instead of Mongoose documents
-        }
+        pagination
       );
     } catch (error) {
       logger.error('Error finding requests by client ID:', error);
@@ -68,7 +64,7 @@ export class ReceiptAnalysisRequestRepository extends BaseRepository<ReceiptAnal
   async updateStatus(requestId: string, status: ReceiptStatus): Promise<ReceiptAnalysisRequestDocument | null> {
     try {
       return await this.updateOne(
-        { id: requestId },
+        { requestId: requestId },
         { 
           status,
           updatedAt: new Date(),
@@ -237,7 +233,7 @@ export class ReceiptAnalysisRequestRepository extends BaseRepository<ReceiptAnal
   ): Promise<number> {
     try {
       const result = await this.model.updateMany(
-        { id: { $in: requestIds } },
+        { requestId: { $in: requestIds } },
         { 
           status,
           updatedAt: new Date(),

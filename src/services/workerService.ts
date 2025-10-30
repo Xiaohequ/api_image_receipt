@@ -103,7 +103,8 @@ class WorkerService {
             text: ocrResult.text,
             options: {
               receiptType: metadata?.expectedType as ReceiptType,
-              language: 'fr'
+              language: 'fr',
+              useOpenAI: true // Enable OpenAI extraction
             }
           }
         }
@@ -129,7 +130,13 @@ class WorkerService {
       const result: ExtractedReceiptData = {
         requestId,
         receiptType: metadata?.expectedType as ReceiptType || ReceiptType.UNKNOWN,
-        extractedFields: extractionResult,
+        extractedFields: extractionResult || {
+          totalAmount: { value: 0, currency: 'EUR', confidence: 0 },
+          date: { value: new Date().toISOString(), confidence: 0 },
+          merchantName: { value: 'Inconnu', confidence: 0 },
+          items: [],
+          summary: 'Aucune donnée extraite'
+        },
         processingMetadata: {
           processingTime: processingTime / 1000, // Convert to seconds
           ocrConfidence: ocrResult.confidence,

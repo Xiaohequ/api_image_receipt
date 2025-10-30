@@ -4,6 +4,7 @@
 import { logger } from '../utils/logger';
 import { ReceiptType, ExtractedField, ReceiptItem } from '../types';
 import { ProcessingError, ErrorCode } from '../types/errors';
+import { openaiService, OpenAIExtractionResult } from './openaiService';
 
 export interface ExtractionResult {
   totalAmount: ExtractedField<number> & { currency: string };
@@ -21,6 +22,7 @@ export interface ExtractionOptions {
   language?: 'fr' | 'en' | 'auto';
   receiptType?: ReceiptType;
   strictValidation?: boolean;
+  useOpenAI?: boolean;
 }
 
 export class DataExtractionService {
@@ -118,9 +120,21 @@ export class DataExtractionService {
   async extractData(
     text: string,
     options: ExtractionOptions = {}
-  ): Promise<ExtractionResult> {
+  ): Promise<ExtractionResult | OpenAIExtractionResult> {
     try {
-      logger.info('Starting intelligent data extraction');
+      // Try OpenAI first if enabled and available
+      if (options.useOpenAI && openaiService.isAvailable()) {
+        logger.info('Starting OpenAI data extraction');
+        try {
+          const aiResult = await openaiService.extractReceiptData(text);
+          logger.info('OpenAI extraction completed successfully');
+          return aiResult;
+        } catch (error) {
+          logger.warn('OpenAI extraction failed, falling back to rule-based extraction', { error });
+        }
+      }
+
+      logger.info('Starting rule-based data extraction');
 
       const language = options.language || this.detectLanguage(text);
       const receiptType = options.receiptType || this.detectReceiptType(text);

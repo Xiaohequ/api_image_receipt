@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { validateRequest, schemas } from '../middleware/validation';
 import { AppError, ErrorCode } from '../types/errors';
-import { analysisRateLimiter } from '../middleware/rateLimiter';
+import { analysisRateLimiter } from '../middleware/simpleRateLimiter';
 import { uploadReceiptImage, processUploadedFile } from '../middleware/upload';
 import { statusCacheMiddleware, resultCacheMiddleware, statsCacheMiddleware } from '../middleware/cache';
 import { authenticateApiKey, requirePermission, requireAdmin } from '../middleware/auth';
@@ -14,7 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 const router = Router();
 
 // POST /api/v1/receipts/analyze - Submit receipt image for analysis
-router.post('/analyze', 
+router.post('/analyze',
   authenticateApiKey,
   requirePermission('analyze'),
   analysisRateLimiter,
@@ -34,7 +34,7 @@ router.post('/analyze',
 
       const { requestId, file, imageMetadata } = req.uploadData;
       const { clientId, metadata } = req.body;
-      
+
       logger.info('Receipt analysis request received', {
         requestId,
         clientId,
@@ -106,7 +106,7 @@ router.get('/:id/status',
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
-      
+
       logger.info('Status check request', { requestId: id });
 
       // Get status from status service
@@ -136,7 +136,7 @@ router.get('/:id/result',
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { id } = req.params;
-      
+
       logger.info('Result request', { requestId: id });
 
       // Get result from status service

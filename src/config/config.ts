@@ -26,6 +26,14 @@ interface Config {
     confidenceThreshold: number;
   };
   
+  // OpenAI
+  openai: {
+    apiKey: string;
+    model: string;
+    maxTokens: number;
+    temperature: number;
+  };
+  
   // File Upload
   upload: {
     maxFileSize: number;
@@ -37,6 +45,7 @@ interface Config {
   rateLimit: {
     windowMs: number;
     maxRequests: number;
+    whitelist: string[];
   };
   
   // Security
@@ -90,6 +99,13 @@ export const config: Config = {
     confidenceThreshold: parseInt(process.env.OCR_CONFIDENCE_THRESHOLD || '60', 10),
   },
   
+  openai: {
+    apiKey: process.env.OPENAI_API_KEY || '',
+    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+    maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || '1000', 10),
+    temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.1'),
+  },
+  
   upload: {
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760', 10), // 10MB
     allowedFormats: (process.env.ALLOWED_FORMATS || 'jpeg,jpg,png,pdf').split(','),
@@ -99,6 +115,7 @@ export const config: Config = {
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '3600000', 10), // 1 hour
     maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
+    whitelist: (process.env.RATE_LIMIT_WHITELIST || '127.0.0.1,::1').split(',').map(ip => ip.trim()),
   },
   
   security: {

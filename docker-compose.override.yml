@@ -7,8 +7,9 @@ services:
     volumes:
       # Mount source code for development
       - ./src:/app/src:ro
-      - ./package*.json:/app/
-      - ./tsconfig.json:/app/
+      - ./package.json:/app/package.json:ro
+      - ./package-lock.json:/app/package-lock.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
       # Mount uploads and logs for persistence
       - ./uploads:/app/uploads
       - ./logs:/app/logs

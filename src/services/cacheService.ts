@@ -1,4 +1,4 @@
-import Redis from 'redis';
+import { createClient, RedisClientType } from 'redis';
 import { config } from '../config/config';
 import { logger } from '../utils/logger';
 import { ExtractedReceiptData } from '../types';
@@ -9,12 +9,22 @@ export interface CacheOptions {
 }
 
 class CacheService {
-  private client: Redis.RedisClientType;
+  private client: RedisClientType;
   private isInitialized = false;
   private readonly defaultTTL = 3600; // 1 hour default TTL
 
+  /**
+   * Get Redis client for external use (e.g., rate limiting)
+   */
+  get redisClient(): RedisClientType {
+    if (!this.isInitialized || !this.client) {
+      throw new Error('Cache service not initialized');
+    }
+    return this.client;
+  }
+
   constructor() {
-    this.client = Redis.createClient({
+    this.client = createClient({
       socket: {
         host: config.redis.host,
         port: config.redis.port,
@@ -350,6 +360,93 @@ class CacheService {
         connected: false,
         responseTime: Date.now() - startTime,
       };
+    }
+  }
+
+  /**
+   * Generic get method for cache
+   */
+  async get(key: string): Promise<string | null> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    try {
+      return await this.client.get(key);
+    } catch (error) {
+      logger.error('Failed to get cache value', { key, error });
+      return null;
+    }
+  }
+
+  /**
+   * Generic set method for cache
+   */
+  async set(key: string, value: string, ttl?: number): Promise<void> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    try {
+      if (ttl) {
+        await this.client.setEx(key, ttl, value);
+      } else {
+        await this.client.set(key, value);
+      }
+    } catch (error) {
+      logger.error('Failed to set cache value', { key, error });
+    }
+  }
+
+  /**
+   * Generic delete method for cache
+   */
+  async delete(key: string): Promise<void> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    try {
+      await this.client.del(key);
+    } catch (error) {
+      logger.error('Failed to delete cache value', { key, error });
+    }
+  }
+
+  /**
+   * Increment a numeric value in cache
+   */
+  async increment(key: string, ttl?: number): Promise<number> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    try {
+      const result = await this.client.incr(key);
+      if (ttl && result === 1) {
+        // Set TTL only on first increment
+        await this.client.expire(key, ttl);
+      }
+      return result;
+    } catch (error) {
+      logger.error('Failed to increment cache value', { key, error });
+      return 0;
+    }
+  }
+
+  /**
+   * Decrement a numeric value in cache
+   */
+  async decrement(key: string): Promise<number> {
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
+    try {
+      return await this.client.decr(key);
+    } catch (error) {
+      logger.error('Failed to decrement cache value', { key, error });
+      return 0;
     }
   }
 

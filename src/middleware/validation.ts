@@ -88,7 +88,7 @@ export const validateRequest = (schema: {
       }
       
       logger.error('Validation middleware error', {
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         path: req.path,
         method: req.method
       });
@@ -174,7 +174,7 @@ export const sanitizeInputs = (req: Request, res: Response, next: NextFunction):
     next();
   } catch (error) {
     logger.error('Input sanitization failed', {
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       path: req.path,
       method: req.method
     });

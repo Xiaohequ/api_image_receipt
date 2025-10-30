@@ -7,13 +7,20 @@ services:
     container_name: receipt-analyzer-api
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=development
       - PORT=3000
-      - MONGODB_URI=mongodb://mongodb:27017/receipt-analyzer
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/receipt_analyzer?authSource=admin
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=redis123
       - LOG_LEVEL=debug
+      # OpenAI configuration will be loaded from .env file
+      - OPENAI_MODEL=gpt-4o-mini
+      - OPENAI_MAX_TOKENS=1000
+      - OPENAI_TEMPERATURE=0.1
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs

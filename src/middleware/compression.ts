@@ -42,8 +42,8 @@ export const compressionMiddleware = compression({
   // Window size for compression algorithm
   windowBits: 15,
   
-  // Compression strategy
-  strategy: compression.constants.Z_DEFAULT_STRATEGY,
+  // Compression strategy (use zlib constants directly)
+  strategy: require('zlib').constants.Z_DEFAULT_STRATEGY,
 });
 
 /**

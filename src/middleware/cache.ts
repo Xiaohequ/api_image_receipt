@@ -45,7 +45,8 @@ export function cacheMiddleware(options: CacheMiddlewareOptions = {}) {
         res.setHeader('X-Cache', 'HIT');
         res.setHeader('X-Cache-Key', cacheKey);
         
-        return res.json(cachedResponse);
+        res.json(cachedResponse);
+        return;
       }
 
       // Cache miss - continue with request processing
@@ -102,10 +103,9 @@ function defaultKeyGenerator(req: Request): string {
     params: req.params,
   };
   
-  return crypto
-    .createHash('md5')
-    .update(JSON.stringify(keyData))
-    .digest('hex');
+  const hash = crypto.createHash('md5');
+  hash.update(JSON.stringify(keyData), 'utf8');
+  return hash.digest('hex') as string;
 }
 
 /**

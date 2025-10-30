@@ -3,7 +3,7 @@ import { PaginationParams, PaginatedResponse } from '../types';
 import { logger } from '../utils/logger';
 
 export abstract class BaseRepository<T extends Document> {
-  protected model: Model<T>;
+  public model: Model<T>;
 
   constructor(model: Model<T>) {
     this.model = model;

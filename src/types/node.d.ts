@@ -11,6 +11,10 @@ declare global {
       REDIS_PASSWORD?: string;
       TESSERACT_LANG?: string;
       OCR_CONFIDENCE_THRESHOLD?: string;
+      OPENAI_API_KEY?: string;
+      OPENAI_MODEL?: string;
+      OPENAI_MAX_TOKENS?: string;
+      OPENAI_TEMPERATURE?: string;
       MAX_FILE_SIZE?: string;
       ALLOWED_FORMATS?: string;
       UPLOAD_DIR?: string;

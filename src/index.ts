@@ -7,7 +7,7 @@ import { logger } from './utils/logger';
 // Import middleware
 import { requestLogger } from './middleware/requestLogger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
-import { apiRateLimiter } from './middleware/rateLimiter';
+import { apiRateLimiter, initializeRateLimiter } from './middleware/simpleRateLimiter';
 import { compressionMiddleware, compressionWithLogging } from './middleware/compression';
 import { sanitizeInputs } from './middleware/validation';
 import { securityHeaders } from './utils/security';
@@ -21,6 +21,7 @@ import { workerService } from './services/workerService';
 import { queueService } from './services/queueService';
 import { databaseService } from './services/databaseService';
 import { cacheService } from './services/cacheService';
+import { openaiService } from './services/openaiService';
 
 const app = express();
 
@@ -63,7 +64,7 @@ app.use(compressionWithLogging);
 // Request logging middleware
 app.use(requestLogger);
 
-// Rate limiting
+// Rate limiting middleware
 app.use('/api', apiRateLimiter);
 
 // Body parsing middleware
@@ -92,22 +93,39 @@ const PORT = config.port || 3000;
 
 // Initialize services
 async function initializeServices() {
-  try {
-    logger.info('Initializing services...');
-    
-    // Initialize database first
-    await databaseService.initialize();
-    
-    // Initialize cache service
-    await cacheService.initialize();
-    
-    // Initialize queue and worker services
-    await queueService.initialize();
-    await workerService.initialize();
-    
-    logger.info('All services initialized successfully');
-  } catch (error) {
-    logger.error('Failed to initialize services', { error });
+  logger.info('Initializing services...');
+  
+  const services = [
+    { name: 'Database', init: () => databaseService.initialize() },
+    { name: 'Cache', init: () => cacheService.initialize() },
+    { name: 'Rate Limiter', init: () => initializeRateLimiter() },
+    { name: 'Queue', init: () => queueService.initialize() },
+    { name: 'Worker', init: () => workerService.initialize() },
+    { name: 'OpenAI', init: () => openaiService.initialize() }
+  ];
+
+  let successCount = 0;
+  
+  for (const service of services) {
+    try {
+      await service.init();
+      logger.info(`${service.name} service initialized successfully`);
+      successCount++;
+    } catch (error) {
+      logger.warn(`Failed to initialize ${service.name} service (continuing without it)`, { error: error instanceof Error ? error.message : String(error) });
+      
+      // In development, continue without external services
+      if (config.nodeEnv === 'production') {
+        logger.error('Critical service failure in production', { service: service.name });
+        process.exit(1);
+      }
+    }
+  }
+  
+  logger.info(`Services initialization completed: ${successCount}/${services.length} services running`);
+  
+  if (successCount === 0 && config.nodeEnv === 'production') {
+    logger.error('No services could be initialized in production');
     process.exit(1);
   }
 }
